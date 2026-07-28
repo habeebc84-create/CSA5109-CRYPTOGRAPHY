@@ -1,0 +1,16 @@
+key = input("Enter keyword: ").upper()
+
+letters = ""
+
+for ch in key:
+    if ch not in letters and ch != "J":
+        letters += ch
+
+for ch in "ABCDEFGHIKLMNOPQRSTUVWXYZ":
+    if ch not in letters:
+        letters += ch
+
+print("Playfair Matrix")
+
+for i in range(0, 25, 5):
+    print(letters[i:i+5])
