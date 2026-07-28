@@ -1,0 +1,14 @@
+text = input("Enter text: ").upper()
+
+a = int(input("Enter a: "))
+b = int(input("Enter b: "))
+
+result = ""
+
+for ch in text:
+    if ch.isalpha():
+        x = ord(ch) - 65
+        y = (a * x + b) % 26
+        result += chr(y + 65)
+
+print("Encrypted Text:", result)
