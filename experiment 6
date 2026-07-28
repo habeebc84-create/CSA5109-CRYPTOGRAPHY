@@ -1,0 +1,16 @@
+from collections import Counter
+
+text = input("Enter ciphertext: ").upper()
+
+letters = [ch for ch in text if ch.isalpha()]
+
+count = Counter(letters)
+
+print("\nLetter Frequencies:")
+for ch, freq in count.most_common():
+    print(ch, ":", freq)
+
+most = count.most_common(1)[0][0]
+
+print("\nMost Frequent Letter :", most)
+print("Assumed Mapping      :", most, "-> E")
