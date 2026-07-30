@@ -1,0 +1,15 @@
+plain = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+cipher = "CIPHERABDFGJKLMNOQSTUVWXYZ"
+
+text = input("Enter plaintext: ").upper()
+
+result = ""
+
+for ch in text:
+    if ch.isalpha():
+        index = plain.index(ch)
+        result += cipher[index]
+    else:
+        result += ch
+
+print("Encrypted Text:", result)
