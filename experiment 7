@@ -1,0 +1,17 @@
+cipher = input("Enter ciphertext: ")
+
+mapping = {
+    'A':'X',
+    'B':'Y',
+    'C':'Z'
+}
+
+plain = ""
+
+for ch in cipher:
+    if ch in mapping:
+        plain += mapping[ch]
+    else:
+        plain += ch
+
+print("Decrypted Text:", plain)
