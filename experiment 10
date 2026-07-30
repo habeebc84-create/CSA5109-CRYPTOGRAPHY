@@ -1,0 +1,17 @@
+matrix = [
+['M','F','H','I','K'],
+['U','N','O','P','Q'],
+['Z','V','W','X','Y'],
+['E','L','A','R','G'],
+['D','S','T','B','C']
+]
+
+print("Playfair Matrix:")
+
+for row in matrix:
+    print(*row)
+
+text = input("Enter plaintext: ").upper()
+
+print("Plaintext :", text)
+print("Encrypted Text: (Apply Playfair rules manually)")
