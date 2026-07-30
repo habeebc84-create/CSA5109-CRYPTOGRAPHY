@@ -1,0 +1,18 @@
+# DES Subkey Generation (Simple)
+
+key = input("Enter 56-bit key: ")
+
+left = key[:28]
+right = key[28:]
+
+# Left shift by 1 bit
+left = left[1:] + left[0]
+right = right[1:] + right[0]
+
+combined = left + right
+
+# Take first 48 bits as subkey
+subkey = combined[:48]
+
+print("Generated Subkey:")
+print(subkey)
