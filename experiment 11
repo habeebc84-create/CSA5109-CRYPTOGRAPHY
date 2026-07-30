@@ -1,0 +1,6 @@
+import math
+
+keys = math.factorial(25)
+
+print("Total Possible Keys =", keys)
+print("Approximate Value ≈ 2^84")
