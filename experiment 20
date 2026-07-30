@@ -1,0 +1,14 @@
+# ECB and CBC Error Propagation
+
+blocks = ["P1", "P2", "P3", "P4"]
+
+print("Original Plaintext Blocks:")
+print(blocks)
+
+print("\nError introduced in Ciphertext Block C1")
+
+print("\nECB Mode:")
+print("Affected Block : P1")
+
+print("\nCBC Mode:")
+print("Affected Blocks : P1 and P2") 
