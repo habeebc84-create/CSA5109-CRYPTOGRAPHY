@@ -1,0 +1,12 @@
+cipher = input("Enter ciphertext: ").upper()
+
+count = {}
+
+for ch in cipher:
+    if ch.isalpha():
+        count[ch] = count.get(ch, 0) + 1
+
+print("\nLetter Frequencies:")
+
+for ch in sorted(count, key=count.get, reverse=True):
+    print(ch, ":", count[ch])
