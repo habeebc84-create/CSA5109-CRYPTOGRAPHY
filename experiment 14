@@ -1,0 +1,12 @@
+text = input("Enter plaintext: ").upper().replace(" ", "")
+
+key = list(map(int, input("Enter key values: ").split()))
+
+cipher = ""
+
+for i in range(len(text)):
+    p = ord(text[i]) - ord('A')
+    c = (p + key[i]) % 26
+    cipher += chr(c + ord('A'))
+
+print("Encrypted Text:", cipher)
