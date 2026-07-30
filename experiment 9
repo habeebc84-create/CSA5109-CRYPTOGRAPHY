@@ -1,0 +1,25 @@
+# Simple Playfair Matrix Generation
+
+key = input("Enter keyword: ").upper()
+
+matrix = []
+used = set()
+
+for ch in key:
+    if ch == 'J':
+        ch = 'I'
+    if ch.isalpha() and ch not in used:
+        used.add(ch)
+        matrix.append(ch)
+
+for ch in "ABCDEFGHIKLMNOPQRSTUVWXYZ":
+    if ch not in used:
+        matrix.append(ch)
+
+print("\nPlayfair Matrix:")
+for i in range(0, 25, 5):
+    print(*matrix[i:i+5])
+
+cipher = input("\nEnter ciphertext: ").upper()
+print("Ciphertext:", cipher)
+print("Decryption process can now be applied using the Playfair rules.")
