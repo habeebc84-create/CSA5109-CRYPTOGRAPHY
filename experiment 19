@@ -1,0 +1,13 @@
+from Crypto.Cipher import DES3
+from Crypto.Util.Padding import pad
+from binascii import hexlify
+
+key = b'123456789012345678901234'   # 24-byte key
+iv = b'12345678'                   # 8-byte IV
+
+text = input("Enter plaintext: ").encode()
+
+cipher = DES3.new(key, DES3.MODE_CBC, iv)
+ciphertext = cipher.encrypt(pad(text, 8))
+
+print("Ciphertext:", hexlify(ciphertext).decode())
