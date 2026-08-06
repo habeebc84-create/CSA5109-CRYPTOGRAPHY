@@ -1,0 +1,10 @@
+text = input("Enter ciphertext: ").upper()
+
+freq = {}
+
+for ch in text:
+    if ch.isalpha():
+        freq[ch] = freq.get(ch, 0) + 1
+
+for i in sorted(freq, key=freq.get, reverse=True):
+    print(i, "=", freq[i])
