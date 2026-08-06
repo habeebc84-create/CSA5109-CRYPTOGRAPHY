@@ -1,0 +1,4 @@
+text = input("Enter plaintext: ")
+
+print("Ciphertext:", text[::-1])
+print("Decrypted Text:", text)
