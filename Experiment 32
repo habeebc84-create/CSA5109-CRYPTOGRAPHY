@@ -1,0 +1,10 @@
+import random
+
+message = input("Enter message: ")
+
+k = random.randint(1, 100)
+
+signature = hash(message) + k
+
+print("Random k :", k)
+print("Digital Signature :", signature)
