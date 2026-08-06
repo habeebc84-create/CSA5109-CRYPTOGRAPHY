@@ -1,0 +1,8 @@
+message = 10
+e = 31
+n = 3599
+
+cipher = pow(message, e, n)
+
+print("Ciphertext:", cipher)
+print("Private key required for decryption.")
