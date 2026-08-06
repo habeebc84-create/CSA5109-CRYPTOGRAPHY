@@ -1,0 +1,11 @@
+text = input("Enter plaintext: ")
+
+counter = 1
+
+cipher = ""
+
+for ch in text:
+    cipher += chr((ord(ch) + counter) % 256)
+    counter += 1
+
+print("Ciphertext:", cipher)
