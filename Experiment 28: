@@ -1,0 +1,16 @@
+q = int(input("Enter prime number (q): "))
+a = int(input("Enter primitive root (a): "))
+
+x = int(input("Enter Alice's private key: "))
+y = int(input("Enter Bob's private key: "))
+
+A = pow(a, x, q)
+B = pow(a, y, q)
+
+K1 = pow(B, x, q)
+K2 = pow(A, y, q)
+
+print("Alice's Public Key:", A)
+print("Bob's Public Key:", B)
+print("Shared Key (Alice):", K1)
+print("Shared Key (Bob):", K2)
