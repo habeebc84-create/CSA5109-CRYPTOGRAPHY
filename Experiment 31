@@ -1,0 +1,10 @@
+key = input("Enter binary key: ")
+
+# Generate K1
+k1 = key[1:] + "0"
+
+# Generate K2
+k2 = k1[1:] + "0"
+
+print("Subkey K1:", k1)
+print("Subkey K2:", k2)
