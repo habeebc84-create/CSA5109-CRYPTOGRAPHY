@@ -1,0 +1,11 @@
+p = 59
+q = 61
+e = 31
+
+n = p * q
+phi = (p - 1) * (q - 1)
+
+d = 3031
+
+print("Public Key :", (e, n))
+print("Private Key:", (d, n))
