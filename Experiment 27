@@ -1,0 +1,12 @@
+e = 17
+n = 3233
+
+text = input("Enter message: ").upper()
+
+print("Ciphertext:")
+
+for ch in text:
+    if ch.isalpha():
+        m = ord(ch) - 65
+        c = pow(m, e, n)
+        print(c, end=" ")
