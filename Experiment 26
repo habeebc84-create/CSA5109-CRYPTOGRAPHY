@@ -1,0 +1,11 @@
+p = 61
+q = 53
+e = 17
+
+n = p * q
+
+print("Public Key (e, n):", (e, n))
+
+print("If the private key is leaked,")
+print("generate a new modulus (n) using new values of p and q.")
+print("Generating only new public and private keys is NOT secure.")
