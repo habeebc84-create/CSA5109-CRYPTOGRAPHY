@@ -1,0 +1,10 @@
+text = input("Enter ciphertext: ").upper()
+
+count = {}
+
+for ch in text:
+    if ch.isalpha():
+        count[ch] = count.get(ch, 0) + 1
+
+for ch in sorted(count, key=count.get, reverse=True):
+    print(ch, ":", count[ch])
