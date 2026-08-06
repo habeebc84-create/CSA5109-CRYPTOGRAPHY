@@ -1,0 +1,12 @@
+message = input("Enter message (8 bits): ")
+key = input("Enter key (8 bits): ")
+
+mac = ""
+
+for i in range(8):
+    if message[i] == key[i]:
+        mac += "0"
+    else:
+        mac += "1"
+
+print("CBC-MAC:", mac)
