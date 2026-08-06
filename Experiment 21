@@ -1,0 +1,8 @@
+text = input("Enter plaintext: ")
+
+block = 8
+
+while len(text) % block != 0:
+    text += "*"
+
+print("Padded Text:", text)
