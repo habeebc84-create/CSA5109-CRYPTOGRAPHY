@@ -1,0 +1,69 @@
+import hashlib
+import hmac
+
+message = "Transfer Rs.5000 to Account A"
+secret_key = b"MySecretKey123"
+
+print("HMAC USING SHA-256")
+print("=" * 60)
+
+# Simple SHA-256 hash
+simple_hash = hashlib.sha256(message.encode()).hexdigest()
+
+# HMAC-SHA256
+hmac_value = hmac.new(
+    secret_key,
+    message.encode(),
+    hashlib.sha256
+).hexdigest()
+
+print("Message:")
+print(message)
+
+print("\nSimple SHA-256:")
+print(simple_hash)
+
+print("\nHMAC-SHA256:")
+print(hmac_value)
+
+
+# Verify original message
+calculated_hmac = hmac.new(
+    secret_key,
+    message.encode(),
+    hashlib.sha256
+).hexdigest()
+
+print("\nOriginal Message Verification:")
+
+if hmac.compare_digest(hmac_value, calculated_hmac):
+    print("VALID")
+else:
+    print("INVALID")
+
+
+# Tampering demonstration
+modified_message = "Transfer Rs.9000 to Account A"
+
+modified_hmac = hmac.new(
+    secret_key,
+    modified_message.encode(),
+    hashlib.sha256
+).hexdigest()
+
+print("\nModified Message:")
+print(modified_message)
+
+print("\nModified HMAC:")
+print(modified_hmac)
+
+if hmac.compare_digest(hmac_value, modified_hmac):
+    print("VALID")
+else:
+    print("INVALID")
+
+
+print("\nANALYSIS")
+print("A normal hash does not contain a secret key.")
+print("HMAC combines a secret key with a cryptographic hash.")
+print("Therefore, HMAC provides authentication as well as integrity.")
