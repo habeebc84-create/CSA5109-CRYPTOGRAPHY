@@ -1,0 +1,45 @@
+import hashlib
+import time
+
+messages = [
+    "Hello World",
+    "Python Programming",
+    "Cyber Security",
+    "Data Integrity",
+    "Secure Hash Algorithm"
+]
+
+print("MD5 AND SHA-256 HASH COMPARISON")
+print("=" * 60)
+
+md5_total = 0
+sha_total = 0
+
+for message in messages:
+    print("\nMessage:", message)
+
+    # MD5
+    start = time.perf_counter()
+    md5_hash = hashlib.md5(message.encode()).hexdigest()
+    md5_time = time.perf_counter() - start
+    md5_total += md5_time
+
+    # SHA-256
+    start = time.perf_counter()
+    sha_hash = hashlib.sha256(message.encode()).hexdigest()
+    sha_time = time.perf_counter() - start
+    sha_total += sha_time
+
+    print("MD5     :", md5_hash)
+    print("SHA-256 :", sha_hash)
+    print("MD5 Time     :", md5_time, "seconds")
+    print("SHA-256 Time :", sha_time, "seconds")
+
+print("\n" + "=" * 60)
+print("Total MD5 Time     :", md5_total)
+print("Total SHA-256 Time :", sha_total)
+
+print("\nANALYSIS")
+print("MD5 produces a 128-bit hash and is considered cryptographically broken.")
+print("SHA-256 produces a 256-bit hash and provides much stronger collision resistance.")
+print("MD5 may be slightly faster, but SHA-256 is preferred for security.")
