@@ -1,0 +1,19 @@
+import hashlib
+import time
+
+msgs = ["Hello", "Python", "Himanath"]
+
+for m in msgs:
+    print("Message:", m)
+    print("MD5:", hashlib.md5(m.encode()).hexdigest())
+    print("SHA-256:", hashlib.sha256(m.encode()).hexdigest())
+
+t = time.time()
+for i in range(10000):
+    hashlib.md5(b"Hello")
+print("MD5 Time:", time.time()-t)
+
+t = time.time()
+for i in range(10000):
+    hashlib.sha256(b"Hello")
+print("SHA-256 Time:", time.time()-t)
