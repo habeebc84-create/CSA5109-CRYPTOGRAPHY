@@ -1,0 +1,72 @@
+import hashlib
+import math
+
+# Prime numbers for educational demonstration
+p = 61
+q = 53
+
+# RSA key generation
+n = p * q
+phi = (p - 1) * (q - 1)
+
+e = 17
+
+if math.gcd(e, phi) != 1:
+    raise ValueError("Invalid public exponent")
+
+# Calculate private exponent
+d = pow(e, -1, phi)
+
+print("RSA DIGITAL SIGNATURE")
+print("=" * 50)
+
+print("Public Key :", (e, n))
+print("Private Key:", (d, n))
+
+
+def hash_message(message):
+    digest = hashlib.sha256(message.encode()).hexdigest()
+
+    # Convert hexadecimal hash to integer
+    return int(digest, 16) % n
+
+
+def sign(message):
+    hashed = hash_message(message)
+    signature = pow(hashed, d, n)
+    return signature
+
+
+def verify(message, signature):
+    hashed = hash_message(message)
+    recovered_hash = pow(signature, e, n)
+
+    return hashed == recovered_hash
+
+
+message = "This is an important banking transaction."
+
+print("\nOriginal Message:")
+print(message)
+
+signature = sign(message)
+
+print("\nDigital Signature:")
+print(signature)
+
+if verify(message, signature):
+    print("\nSignature Verification: VALID")
+else:
+    print("\nSignature Verification: INVALID")
+
+
+# Tampering demonstration
+modified_message = "This is a modified banking transaction."
+
+print("\nModified Message:")
+print(modified_message)
+
+if verify(modified_message, signature):
+    print("Signature Verification: VALID")
+else:
+    print("Signature Verification: INVALID")
