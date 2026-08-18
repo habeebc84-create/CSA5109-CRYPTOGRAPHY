@@ -1,0 +1,91 @@
+import hashlib
+import random
+
+# Educational ElGamal parameters
+p = 467
+g = 2
+
+# Private key
+x = 127
+
+# Public key
+y = pow(g, x, p)
+
+
+def hash_message(message):
+    return int(
+        hashlib.sha256(message.encode()).hexdigest(),
+        16
+    )
+
+
+def sign(message):
+    h = hash_message(message)
+
+    # Select random k such that gcd(k, p-1) = 1
+    while True:
+        k = random.randint(2, p - 2)
+
+        if __import__("math").gcd(k, p - 1) == 1:
+            break
+
+    r = pow(g, k, p)
+
+    # Modular inverse of k
+    k_inverse = pow(k, -1, p - 1)
+
+    s = ((h - x * r) * k_inverse) % (p - 1)
+
+    return r, s
+
+
+def verify(message, signature):
+    r, s = signature
+    h = hash_message(message)
+
+    if not (0 < r < p):
+        return False
+
+    left = pow(g, h, p)
+
+    right = (
+        pow(y, r, p) *
+        pow(r, s, p)
+    ) % p
+
+    return left == right
+
+
+print("ELGAMAL DIGITAL SIGNATURE")
+print("=" * 60)
+
+print("Prime p :", p)
+print("Generator g :", g)
+print("Public Key y :", y)
+
+message = "Digital signature protects message integrity."
+
+print("\nOriginal Message:")
+print(message)
+
+signature = sign(message)
+
+print("\nSignature (r, s):")
+print(signature)
+
+if verify(message, signature):
+    print("\nVerification: VALID")
+else:
+    print("\nVerification: INVALID")
+
+
+# Tampering test
+modified_message = "Digital signature message has been modified."
+
+print("\nModified Message:")
+print(modified_message)
+
+if verify(modified_message, signature):
+    print("Verification: VALID")
+else:
+    print("Verification: INVALID")
