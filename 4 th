@@ -1,0 +1,111 @@
+import hmac
+import hashlib
+import time
+import json
+import base64
+
+# Shared secret keys
+AS_KEY = b"authentication_server_key"
+SERVER_KEY = b"application_server_key"
+
+TICKET_VALIDITY = 30
+
+
+def create_ticket(username):
+    timestamp = int(time.time())
+
+    ticket_data = {
+        "username": username,
+        "timestamp": timestamp
+    }
+
+    ticket_text = json.dumps(ticket_data, sort_keys=True)
+
+    # Protect ticket using HMAC
+    signature = hmac.new(
+        SERVER_KEY,
+        ticket_text.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    ticket = {
+        "data": ticket_data,
+        "signature": signature
+    }
+
+    encoded_ticket = base64.b64encode(
+        json.dumps(ticket).encode()
+    ).decode()
+
+    return encoded_ticket
+
+
+def validate_ticket(encoded_ticket):
+    try:
+        decoded = base64.b64decode(encoded_ticket).decode()
+        ticket = json.loads(decoded)
+
+        data = ticket["data"]
+        received_signature = ticket["signature"]
+
+        ticket_text = json.dumps(data, sort_keys=True)
+
+        expected_signature = hmac.new(
+            SERVER_KEY,
+            ticket_text.encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        # Verify ticket integrity
+        if not hmac.compare_digest(
+            received_signature,
+            expected_signature
+        ):
+            return False, "Invalid ticket signature"
+
+        # Check timestamp
+        current_time = int(time.time())
+
+        if current_time - data["timestamp"] > TICKET_VALIDITY:
+            return False, "Ticket expired"
+
+        if current_time < data["timestamp"]:
+            return False, "Invalid timestamp"
+
+        return True, "Authentication successful for " + data["username"]
+
+    except Exception:
+        return False, "Invalid ticket format"
+
+
+print("SIMPLIFIED KERBEROS AUTHENTICATION")
+print("=" * 60)
+
+client = "student01"
+
+print("\nClient requests authentication:")
+print(client)
+
+# Authentication server generates ticket
+ticket = create_ticket(client)
+
+print("\nAuthentication Server generates ticket:")
+print(ticket)
+
+print("\nClient sends ticket to Application Server.")
+
+# Server validates ticket
+status, message = validate_ticket(ticket)
+
+print("\nServer Validation:")
+print(message)
+
+
+# Demonstrate tampering
+print("\nTampering Test:")
+
+tampered_ticket = ticket[:-3] + "XYZ"
+
+status, message = validate_ticket(tampered_ticket)
+
+print(message)
