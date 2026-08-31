@@ -1,1 +1,303 @@
+"""
+Evaluation of Cryptographic Hash Functions and Digital Signatures
+in Electronic Health Record (EHR) Security
+-------------------------------------------------------------------
+Assignment 5 | CO2, CO3 | BL5 - Evaluate
 
+Simulates a telemedicine scenario where a doctor issues a diagnosis /
+prescription document that must travel from a Healthcare Provider ->
+Diagnostic Lab / Insurance Portal with:
+    - Integrity assurance      (hash functions)
+    - Source authentication    (digital signature)
+    - Non-repudiation          (private-key signing)
+    - Tamper detection         (verification failure on modification)
+
+Run:
+    python3 ehr_integrity_auth.py
+"""
+
+import hashlib
+import time
+import json
+from datetime import datetime, timezone
+
+from cryptography.hazmat.primitives.asymmetric import rsa, padding, ec
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.exceptions import InvalidSignature
+
+
+# ---------------------------------------------------------------------------
+# 1. SAMPLE ELECTRONIC HEALTH RECORDS / DIGITAL PRESCRIPTIONS
+# ---------------------------------------------------------------------------
+
+def load_sample_records():
+    """Simulated medical documents exchanged between hospital <-> lab <-> insurer."""
+    records = [
+        {
+            "record_id": "EHR-2026-00147",
+            "patient_id": "PT-88231",
+            "provider": "Sunrise Multispeciality Hospital",
+            "physician": "Dr. A. Ramesh, MD (Cardiology)",
+            "diagnosis": "Stage 1 Hypertension, mild Left Ventricular Hypertrophy",
+            "prescription": "Tab. Amlodipine 5mg OD, Tab. Metoprolol 25mg BD",
+            "timestamp": "2026-08-30T09:15:00Z",
+        },
+        {
+            "record_id": "RX-2026-00982",
+            "patient_id": "PT-40217",
+            "provider": "Kalikiri Diagnostic Labs",
+            "physician": "Dr. S. Priya, MBBS",
+            "diagnosis": "Type II Diabetes Mellitus, HbA1c 7.8%",
+            "prescription": "Tab. Metformin 500mg BD, dietary review in 30 days",
+            "timestamp": "2026-08-31T08:40:00Z",
+        },
+    ]
+    return records
+
+
+def canonical_bytes(record: dict) -> bytes:
+    """Deterministic byte representation so hashing is reproducible."""
+    return json.dumps(record, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# 2. HASH FUNCTION EVALUATION  (MD5 / SHA-1 / SHA-256 / SHA-3-256)
+# ---------------------------------------------------------------------------
+
+HASH_ALGORITHMS = {
+    "MD5":        hashlib.md5,
+    "SHA-1":      hashlib.sha1,
+    "SHA-256":    hashlib.sha256,
+    "SHA-3-256":  hashlib.sha3_256,
+}
+
+# Known collision status used for the evaluation table (public cryptanalysis facts)
+HASH_SECURITY_NOTES = {
+    "MD5":       {"digest_bits": 128, "collision_resistant": False, "status": "Broken - practical collisions demonstrated"},
+    "SHA-1":     {"digest_bits": 160, "collision_resistant": False, "status": "Broken - SHAttered attack (2017)"},
+    "SHA-256":   {"digest_bits": 256, "collision_resistant": True,  "status": "Secure - no known practical attack"},
+    "SHA-3-256": {"digest_bits": 256, "collision_resistant": True,  "status": "Secure - sponge construction, different design from SHA-2"},
+}
+
+
+def hash_record(data: bytes, algo_name: str) -> str:
+    h = HASH_ALGORITHMS[algo_name]()
+    h.update(data)
+    return h.hexdigest()
+
+
+def benchmark_hashes(data: bytes, iterations: int = 20000):
+    """Rough relative-speed comparison (computational overhead)."""
+    results = {}
+    for name, fn in HASH_ALGORITHMS.items():
+        start = time.perf_counter()
+        for _ in range(iterations):
+            h = fn()
+            h.update(data)
+            h.hexdigest()
+        elapsed = time.perf_counter() - start
+        results[name] = {
+            "total_seconds": round(elapsed, 4),
+            "avg_microseconds_per_hash": round((elapsed / iterations) * 1e6, 2),
+        }
+    return results
+
+
+# ---------------------------------------------------------------------------
+# 3. DIGITAL SIGNATURE SCHEME - RSA-PSS with SHA-256
+# ---------------------------------------------------------------------------
+
+def generate_rsa_keypair(key_size: int = 2048):
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+    public_key = private_key.public_key()
+    return private_key, public_key
+
+
+def rsa_sign(private_key, message: bytes) -> bytes:
+    """Signs SHA-256 digest of the message using RSA-PSS (recommended over PKCS#1 v1.5)."""
+    signature = private_key.sign(
+        message,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH,
+        ),
+        hashes.SHA256(),
+    )
+    return signature
+
+
+def rsa_verify(public_key, message: bytes, signature: bytes) -> bool:
+    try:
+        public_key.verify(
+            signature,
+            message,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
+        return True
+    except InvalidSignature:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# 4. ALTERNATIVE SCHEME FOR COMPARISON - ECDSA (P-256)
+#    Included so the report can evaluate RSA vs ECC signature overhead.
+# ---------------------------------------------------------------------------
+
+def generate_ec_keypair():
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key()
+    return private_key, public_key
+
+
+def ec_sign(private_key, message: bytes) -> bytes:
+    return private_key.sign(message, ec.ECDSA(hashes.SHA256()))
+
+
+def ec_verify(public_key, message: bytes, signature: bytes) -> bool:
+    try:
+        public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
+        return True
+    except InvalidSignature:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# 5. END-TO-END DEMONSTRATION: HASH -> SIGN -> TRANSMIT -> VERIFY
+# ---------------------------------------------------------------------------
+
+def run_demo():
+    print("=" * 78)
+    print(" EHR CRYPTOGRAPHIC INTEGRITY & AUTHENTICATION - DEMONSTRATION")
+    print("=" * 78)
+
+    records = load_sample_records()
+    rsa_priv, rsa_pub = generate_rsa_keypair()
+    ec_priv, ec_pub = generate_ec_keypair()
+
+    all_results = []
+
+    for record in records:
+        print(f"\n--- Record: {record['record_id']} ({record['provider']}) ---")
+        data = canonical_bytes(record)
+
+        # 5a. Hash under each algorithm
+        print("\n[1] Hash digests:")
+        digests = {}
+        for algo in HASH_ALGORITHMS:
+            d = hash_record(data, algo)
+            digests[algo] = d
+            print(f"    {algo:10s}: {d}")
+
+        # 5b. Sign the document (using SHA-256-based hash, RSA-PSS)
+        signature_rsa = rsa_sign(rsa_priv, data)
+        signature_ec = ec_sign(ec_priv, data)
+        print(f"\n[2] RSA-PSS signature (first 32 hex chars): {signature_rsa.hex()[:32]}...")
+        print(f"    ECDSA signature      (first 32 hex chars): {signature_ec.hex()[:32]}...")
+
+        # 5c. Verify with the ORIGINAL, unaltered document -> should PASS
+        valid_rsa = rsa_verify(rsa_pub, data, signature_rsa)
+        valid_ec = ec_verify(ec_pub, data, signature_ec)
+        print(f"\n[3] Verification on ORIGINAL document:")
+        print(f"    RSA-PSS  valid? {valid_rsa}")
+        print(f"    ECDSA    valid? {valid_ec}")
+
+        # 5d. Simulate tampering: attacker changes the prescription dosage
+        tampered_record = dict(record)
+        tampered_record["prescription"] = tampered_record["prescription"].replace("5mg", "50mg") \
+            if "5mg" in tampered_record["prescription"] else tampered_record["prescription"] + " [ALTERED]"
+        tampered_data = canonical_bytes(tampered_record)
+
+        tampered_hash_sha256 = hash_record(tampered_data, "SHA-256")
+        hash_changed = tampered_hash_sha256 != digests["SHA-256"]
+
+        valid_rsa_tampered = rsa_verify(rsa_pub, tampered_data, signature_rsa)
+        valid_ec_tampered = ec_verify(ec_pub, tampered_data, signature_ec)
+
+        print(f"\n[4] TAMPERING SIMULATION - attacker modifies prescription in transit:")
+        print(f"    Original prescription : {record['prescription']}")
+        print(f"    Tampered prescription : {tampered_record['prescription']}")
+        print(f"    SHA-256 digest changed?      {hash_changed}")
+        print(f"    Signature still valid (RSA)? {valid_rsa_tampered}  (expected: False)")
+        print(f"    Signature still valid (EC)?  {valid_ec_tampered}  (expected: False)")
+
+        all_results.append({
+            "record_id": record["record_id"],
+            "digests": digests,
+            "rsa_signature_hex": signature_rsa.hex(),
+            "ec_signature_hex": signature_ec.hex(),
+            "original_verification": {"rsa_pss": valid_rsa, "ecdsa": valid_ec},
+            "tamper_test": {
+                "hash_changed": hash_changed,
+                "rsa_signature_valid_after_tamper": valid_rsa_tampered,
+                "ecdsa_signature_valid_after_tamper": valid_ec_tampered,
+            },
+        })
+
+    # 5e. Benchmark computational overhead
+    print("\n" + "=" * 78)
+    print(" [5] COMPUTATIONAL OVERHEAD - Hash Algorithm Benchmark (20,000 iterations)")
+    print("=" * 78)
+    sample_data = canonical_bytes(records[0])
+    bench = benchmark_hashes(sample_data)
+    for algo, stats in bench.items():
+        print(f"    {algo:10s}: {stats['total_seconds']:>8.4f}s total | "
+              f"{stats['avg_microseconds_per_hash']:>8.2f} us/hash")
+
+    # 5f. Signature scheme timing comparison
+    print("\n" + "=" * 78)
+    print(" [6] SIGNATURE SCHEME OVERHEAD - RSA-2048 vs ECDSA P-256 (200 iterations)")
+    print("=" * 78)
+    iters = 200
+    t0 = time.perf_counter()
+    for _ in range(iters):
+        rsa_sign(rsa_priv, sample_data)
+    rsa_sign_time = (time.perf_counter() - t0) / iters * 1000
+
+    t0 = time.perf_counter()
+    for _ in range(iters):
+        rsa_verify(rsa_pub, sample_data, signature_rsa)
+    rsa_verify_time = (time.perf_counter() - t0) / iters * 1000
+
+    t0 = time.perf_counter()
+    for _ in range(iters):
+        ec_sign(ec_priv, sample_data)
+    ec_sign_time = (time.perf_counter() - t0) / iters * 1000
+
+    t0 = time.perf_counter()
+    for _ in range(iters):
+        ec_verify(ec_pub, sample_data, signature_ec)
+    ec_verify_time = (time.perf_counter() - t0) / iters * 1000
+
+    print(f"    RSA-2048 sign  : {rsa_sign_time:.3f} ms/op   | signature size: {len(signature_rsa)} bytes")
+    print(f"    RSA-2048 verify: {rsa_verify_time:.3f} ms/op")
+    print(f"    ECDSA P-256 sign  : {ec_sign_time:.3f} ms/op | signature size: {len(signature_ec)} bytes")
+    print(f"    ECDSA P-256 verify: {ec_verify_time:.3f} ms/op")
+
+    perf_summary = {
+        "rsa_2048": {"sign_ms": round(rsa_sign_time, 3), "verify_ms": round(rsa_verify_time, 3),
+                     "signature_bytes": len(signature_rsa)},
+        "ecdsa_p256": {"sign_ms": round(ec_sign_time, 3), "verify_ms": round(ec_verify_time, 3),
+                       "signature_bytes": len(signature_ec)},
+    }
+
+    # 5g. Persist a results log (useful for the report / GitHub README)
+    output = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "hash_security_notes": HASH_SECURITY_NOTES,
+        "hash_benchmark_us_per_hash": {k: v["avg_microseconds_per_hash"] for k, v in bench.items()},
+        "signature_performance": perf_summary,
+        "records": all_results,
+    }
+    with open("results_log.json", "w") as f:
+        json.dump(output, f, indent=2)
+
+    print("\n[+] Full results written to results_log.json")
+    print("=" * 78)
+
+
+if __name__ == "__main__":
+    run_demo()
